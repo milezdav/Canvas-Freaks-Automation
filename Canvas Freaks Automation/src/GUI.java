@@ -1,6 +1,7 @@
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
-
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -24,6 +25,8 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.text.html.HTMLDocument.Iterator;
 
 import org.apache.commons.io.FileUtils;
@@ -259,7 +262,7 @@ public class GUI extends JFrame implements ActionListener {
 		               	singlePanelCount.put(folderName, intTemp);
 	                }
 				}
-				displayCount();
+				displayCount(chosenFolder);
 			
 			}
 			
@@ -336,19 +339,76 @@ public class GUI extends JFrame implements ActionListener {
 		}
 	}
 	
-	public static void displayCount() {
-	
-		for (String key: singlePanelCount.keySet()) {
-			int[] test = singlePanelCount.get(key);
-			
-			for (int i = 0; i< test.length; i++) {
-				System.out.println(key + " " + test[i]);
-				
-			
-			}
-			
-		}
-	}
+	 public static void displayCount(File folder) {
+		    JFrame frame = new JFrame("Count");
+		    
+		    DefaultTableModel tableModel = new DefaultTableModel();
+		    DefaultTableModel tableMultiModel = new DefaultTableModel();
+		    DefaultTableModel totalCountModel = new DefaultTableModel();
+		    
+		    JTable tableSingle = new JTable(tableModel);
+		    JTable tableTotalCount = new JTable(totalCountModel);
+		    
+		    JTableHeader header1 = tableSingle.getTableHeader();
+		    header1.setBackground(Color.yellow);
+		    JTableHeader header2 = tableTotalCount.getTableHeader();
+		    header2.setBackground(Color.yellow);
+		    
+		    tableTotalCount.setRowHeight(70);
+		    tableSingle.setRowHeight(70);
+		    
+		    tableModel.addColumn("Dimension");
+		    tableModel.addColumn("0.75");
+		    tableModel.addColumn("1.5");
+		    tableModel.addColumn("FL");
+		    
+		    totalCountModel.addColumn("0.75 Count");
+		    totalCountModel.addColumn("1.5 Count");
+		    totalCountModel.addColumn("FL Count");
+		    totalCountModel.addColumn("Total Count");
+		    
+		    int firstSizeCount = 0;
+		    int secondSizeCount = 0;
+		    int thirdSizeCount = 0;
+		    
+		    tableSingle.getTableHeader().setResizingAllowed(true);
+		    
+		    int totalCount = 0;
+		    int zeroPointSevenFiveCount = 0;
+		    int onePointFiveCount = 0;
+		    int FLCount = 0;
+		    for (String key : singlePanelCount.keySet()) {
+			      int[] temp = singlePanelCount.get(key);
+			      int i;
+			      for (i = 0; i < temp.length; i++) {
+			        firstSizeCount = temp[0];
+			        secondSizeCount = temp[1];
+			        thirdSizeCount = temp[2];
+			        totalCount += temp[i];
+			      } 
+			      for (i = 0; i < temp.length; i += 3)
+			        zeroPointSevenFiveCount += temp[i]; 
+			      for (i = 1; i < temp.length; i += 2)
+			        onePointFiveCount += temp[i]; 
+			      for (i = 2; i < temp.length; i += 3)
+			        FLCount += temp[i]; 
+			      tableModel.addRow(new Object[] { key, firstSizeCount, secondSizeCount, thirdSizeCount});
+			    } 
+		    totalCountModel.addRow(new Object[] { zeroPointSevenFiveCount, onePointFiveCount, FLCount, totalCount});
+		    
+		    Font myFont = new Font("Calibiri", 0, 14);
+		    JSplitPane splitPane = new JSplitPane(1);
+		    splitPane.add(new JScrollPane(tableSingle));
+		    splitPane.add(new JScrollPane(tableTotalCount));
+		    tableSingle.setFont(myFont);
+		    tableTotalCount.setFont(myFont);
+		    
+		    frame.setDefaultCloseOperation(3);
+		    frame.add(splitPane);
+		    frame.setSize(800, 300);
+		    frame.pack();
+		    frame.setVisible(true);
+		  }
 	
 	public static void getMultiCount(String filePath) {
 		
