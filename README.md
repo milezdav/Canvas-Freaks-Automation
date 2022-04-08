@@ -3,5 +3,5 @@ This tool is used to automate processes used for commerical printing at the comp
 All of the implementations automate processes that involve the Windows File System.
 These implementations include:
 a button to automatically sort, create, and move files for the multi panels --
-a button to get the total count for all the files in selected folder --
-a button get total count files with Floating Frames from multiple selected folders 
+a button to get the total count table for all the files in selected folder --
+a button get total count files for different types of Floating Frames from multiple selected folders 
