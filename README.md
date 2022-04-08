@@ -1,5 +1,5 @@
 # Canvas-Freaks-Automation
-This tool is used to automate processes used do commerical printing at the company Canvas Freaks.
+This tool is used to automate processes used for commerical printing at the company Canvas Freaks.
 All of the implementations automate processes that involve the Windows File System.
 These implementations include:
 a button to automatically sort, create, and move files for the multi panels --
