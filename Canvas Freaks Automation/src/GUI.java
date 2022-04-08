@@ -47,7 +47,7 @@ public class GUI extends JFrame implements ActionListener {
 	JButton multiButton;
 	JButton countButton;
 	JButton floatingCountButton;
-	JButton mergeButton;
+
 
 	//Initialize fileTree array
 	static File[] fileTree;
@@ -55,7 +55,6 @@ public class GUI extends JFrame implements ActionListener {
 	//Initialize HashMaps used for single panel count, multi count
 	private static HashMap<String, int[]> singlePanelCount = new HashMap<String, int[]>();
 	private static HashMap<String, Integer> multiPanelCount = new HashMap<String, Integer>();
-
 
 	//Initialize global sub-folders to be null
 	static File largeFolderThree = null;
@@ -79,13 +78,13 @@ public class GUI extends JFrame implements ActionListener {
 	static Font myFont = new Font("Calibiri", 0, 14);
 
 	//Initialize variables needed for fileChooser function
-	String filePath;
-	String extraLargePath;
-	String largePath;
-	String mediumPath;
+	static String filePath;
+	static String extraLargePath;
+	static String largePath;
+	static String mediumPath;
 	static File chosenFolder;
-	JFileChooser fileChooser;
-	int option;
+	static JFileChooser fileChooser;
+	static int option;
 	File folderName;
 	File tmpFile;
 
@@ -104,13 +103,9 @@ public class GUI extends JFrame implements ActionListener {
 		floatingCountButton = new JButton("Get FL Count From Multiple Folders");
 		floatingCountButton.setBounds(200, 100, 100, 50);
 
-		mergeButton = new JButton("Merge Folders With Same Dimensions");
-		mergeButton.setBounds(200, 100, 100, 50);
-
 		multiButton.addActionListener(this);
 		countButton.addActionListener(this);
 		floatingCountButton.addActionListener(this);
-		mergeButton.addActionListener(this);
 
 		this.add(countButton);
 		this.add(multiButton);
@@ -122,201 +117,172 @@ public class GUI extends JFrame implements ActionListener {
 
 	}
 
-
-
-
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
-		/*
-		if (e.getSource() == mergeButton) {
-
-
-			fileChooser(fileChooser, option);
-			fileTree = listFileTree(chosenFolder);
-			for (File f: fileTree) {
-
-				String filePath = f.toString();
-
-				String [] parts = filePath.split("\\\\");
-
-				String folderName = parts[parts.length - 2];
-
-
-				if (folderName.contains("X")) {
-					folderName = folderName.replace("X", "x");
-				}
-				for (String dimension: dimensionsArray) {
-					if (!folderName.contains(dimension)) {
-						System.out.println(folderName);
-					}
-				}
-			}
-
-		}
-
-
-
-		*/
 		if (e.getSource() == floatingCountButton) {
-
-			try {
-				UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-			}
-			catch (Exception e1) {
-				e1.printStackTrace();
-			}
-			JFileChooser multiFileChooser = new JFileChooser();
-			multiFileChooser.setMultiSelectionEnabled(true);
-			multiFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-			int multiFileOption = multiFileChooser.showOpenDialog(null);
-			if (multiFileOption == JFileChooser.APPROVE_OPTION){
-				File [] multipleFolders = multiFileChooser.getSelectedFiles();
-				//Loop through all folders selected
-				for (int i = 0; i < multipleFolders.length; i++) {
-
-					blackFLCount = 0;
-					goldFLCount = 0;
-					whiteFLCount = 0;
-					extraLargeGoldFLCount = 0;
-					totalFLCount = 0;
-
-					fileTree = listFileTree(multipleFolders[i]);
-
-					//Loop through all sub folders in all selected folders
-					for (File f: fileTree) {
-						filePath = f.toString();
-
-						//Get count for all FL, Gold FL, White FL, and Black FL
-						if (filePath.contains("FL")) {
-							totalFLCount++;
-							if (filePath.contains("WFL")) {
-								whiteFLCount++;
-							} else if (filePath.contains("GFL")) {
-								goldFLCount++;
-							} else {
-								blackFLCount++;
-							}
-						}
-						//Specific count for XL GFL
-						if (filePath.contains("GFL") && (Stream.of("1XLP", "48X36", "36X48", "48x36", "36x48").anyMatch(filePath::contains))) {
-							extraLargeGoldFLCount++;
-						}
-					}
-				}
-				displayFLCount();
-			}
-
-
-			//If "Get Count" is selected
+			floatingCountButton();
+	
 		} else if (e.getSource() == countButton) {
+			countButton();
 
-			fileChooser(fileChooser, option);
-			fileTree = listFileTree(chosenFolder);
-			for (File f: fileTree) {
-				filePath = f.toString();
-
-				//CONCEPT --> using singlePanelCount hash table, goal is to store a key = the dimension TO a value = of a array of ints (thickness)
-				//{12x9}: {0.75, 1.5, FL}
-				//{32x24}: {0.75, 1.5, FL}
-
-				//Then use a getFileCount(String dimension) function to index into the hash table and display values
-
-				//Example path
-				//"D:\P5 03.11 Evening Fotoba (sunset)\12x9\AD1-WCM7744_12x9.jpg"
-				//"C:\Users\Miles Davis\Desktop\testing\P5 03.11 Evening Fotoba (sunset)\12x9\AB1_164486_12x9.jpg"
-				//"C:\Users\Miles Davis\Desktop\testing\P5 03.11 Evening Fotoba (sunset)\32x24\FL_HDF116840_24x32_0001.jpg"
-
-				String [] parts = filePath.split("\\\\");
-				String fileName = parts[parts.length-1];
-
-				//Handle edge cases where fileName doesn't contain actual dimension
-				if (Stream.of("1XLP1", "1LP1", "1SP1", "1MP1").anyMatch(filePath::contains)) {
-
-					fileName = fileName.replace("1XLP1", "48x36");
-					fileName = fileName.replace("1LP1", "32x24");
-					fileName = fileName.replace("1SP1", "16x12");
-					fileName = fileName.replace("1MP1", "24x18");
-
-				}
-
-				//Force all fileNames to have a small x (for example --> 30x40 vs 30X40) for simplicity
-				if (fileName.contains("X")) {
-					String tmpFileName = fileName.replace("X", "x");
-					fileName = tmpFileName;
-				}
-
-				//Regex used to parse dimension from fileName
-				String dimension = null;
-				Pattern pattern = Pattern.compile("\\d+x\\d+");
-				Matcher matcher = pattern.matcher(fileName);
-
-				if (matcher.find()) {
-					dimension = matcher.group(0);
-				}
+		} else if (e.getSource() == multiButton) {
+			multiButton();
 				
-
-				//Loop through array of all dimensions, store the swapped dimensions in a variable (for example --> 12x9 vs 9x12)
-				//if the dimension contains a swapped dimensions swap that specific dimension back to dimensionInArray and replace that fileName with that dimension
-				if (dimension != null) {
-					for (String size: dimensionsArray) {
-						String [] dimensionParts = size.split("x");
-						String swappedDimension = dimensionParts[1] + "x" + dimensionParts[0];
-
-						if (dimension.equals(swappedDimension)) {
-							String dimensionInArray = dimensionParts[0] + "x" + dimensionParts[1];
-							dimension = dimension.replace(swappedDimension, dimensionInArray);
-						}
-					}
-				}
-
-				//Put sizes in hashMap with int array of thickness
-				if (dimension != null) {
-						if (!singlePanelCount.containsKey(dimension)) {
-							singlePanelCount.put(dimension, new int[] {0,0,0});
-						}
-						//Logic to change the count for each individual thickness for each key in the hashMap
-						int[] intTemp = singlePanelCount.get(dimension);
-						if (fileName.contains("FL")) {
-							intTemp[2]++;
-						} else if (fileName.contains("1.5")) {
-							intTemp[1]++;
-						} else {
-							intTemp[0]++;
-						}
-						singlePanelCount.put(dimension, intTemp);
-					}
-				getMultiCount(filePath);
-			}
-			displayCount();
 		}
+	}
+	
+	public static void multiButton() {
+		fileChooser(fileChooser, option);
+		fileTree = listFileTree(chosenFolder);
+		for (File f: fileTree) {
 
+			filePath = f.toString();
+			extraLargePath = (filePath.substring(0,filePath.indexOf("Extra Large") + 11));
+			largePath = (filePath.substring(0,filePath.indexOf("Large") + 5));
+			mediumPath = (filePath.substring(0,filePath.indexOf("Medium") + 6));
 
-		//If "Organize Multi Files" is selected
+			createFolders(filePath, extraLargePath, largePath, mediumPath);
 
-		else if (e.getSource() == multiButton) {
+			sortFiles(f, filePath);
 
-			fileChooser(fileChooser, option);
-			fileTree = listFileTree(chosenFolder);
-			for (File f: fileTree) {
-
-				filePath = f.toString();
-				extraLargePath = (filePath.substring(0,filePath.indexOf("Extra Large") + 11));
-				largePath = (filePath.substring(0,filePath.indexOf("Large") + 5));
-				mediumPath = (filePath.substring(0,filePath.indexOf("Medium") + 6));
-
-				createFolders(filePath, extraLargePath, largePath, mediumPath);
-
-				sortFiles(f, filePath);
-
-				getMultiCount(filePath);
-			}
-
-		} else {
-			System.out.println("Open command canceled");
+			getMultiCount(filePath);
 		}
 	}
 
+	public static void countButton() {
+		
+		fileChooser(fileChooser, option);
+		fileTree = listFileTree(chosenFolder);
+		for (File f: fileTree) {
+			filePath = f.toString();
+
+			//CONCEPT --> using singlePanelCount hash table, goal is to store a key = the dimension TO a value = of a array of ints (thickness)
+			//{12x9}: {0.75, 1.5, FL}
+			//{32x24}: {0.75, 1.5, FL}
+
+			//Then use a getFileCount(String dimension) function to index into the hash table and display values
+
+			//Example path
+			//"D:\P5 03.11 Evening Fotoba (sunset)\12x9\AD1-WCM7744_12x9.jpg"
+			//"C:\Users\Miles Davis\Desktop\testing\P5 03.11 Evening Fotoba (sunset)\12x9\AB1_164486_12x9.jpg"
+			//"C:\Users\Miles Davis\Desktop\testing\P5 03.11 Evening Fotoba (sunset)\32x24\FL_HDF116840_24x32_0001.jpg"
+
+			String [] parts = filePath.split("\\\\");
+			String fileName = parts[parts.length-1];
+			
+			//Convert to upperCase for case-insensitivity
+			fileName = fileName.toUpperCase(); 
+	
+			if (Stream.of("1XLP1", "1LP1", "1SP1", "1MP1").anyMatch(fileName::contains)) {
+			
+				fileName = fileName.replace("1XLP1", "48x36");
+				fileName = fileName.replace("1LP1", "32x24");
+				fileName = fileName.replace("1SP1", "16x12");
+				fileName = fileName.replace("1MP1", "24x18");
+				
+			}
+		
+			//Force all fileNames to have a small "x" (for example --> 30x40 vs 30X40) for simplicity
+			if (fileName.contains("X")) {
+				String tmpFileName = fileName.replace("X", "x");
+				fileName = tmpFileName;
+			}
+
+			//Regex used to parse dimension from fileName
+			String dimension = null;
+			Pattern pattern = Pattern.compile("\\d+x\\d+");
+			Matcher matcher = pattern.matcher(fileName);
+
+			if (matcher.find()) {
+				dimension = matcher.group(0);
+			}
+
+			//Loop through array of all dimensions, store the swapped dimensions in a variable (for example --> 12x9 vs 9x12)
+			//if the dimension contains a swapped dimension swap that specific dimension back to dimensionInArray
+			if (dimension != null) {
+				for (String size: dimensionsArray) {
+					String [] dimensionParts = size.split("x");
+					String swappedDimension = dimensionParts[1] + "x" + dimensionParts[0];
+					
+					if (dimension.equals(swappedDimension)) {
+						String dimensionInArray = dimensionParts[0] + "x" + dimensionParts[1];
+						dimension = dimension.replace(swappedDimension, dimensionInArray);
+					}
+				}
+			}
+
+			//Put sizes in hashMap with int array of thickness
+			if (dimension != null) {
+					if (!singlePanelCount.containsKey(dimension)) {
+						singlePanelCount.put(dimension, new int[] {0,0,0});
+					}
+					//Logic to change the count for each individual thickness for each key in the hashMap
+					int[] intTemp = singlePanelCount.get(dimension);
+					if (fileName.contains("FL")) {
+						intTemp[2]++;
+					} else if (fileName.contains("1.5")) {
+						intTemp[1]++;
+					} else {
+						intTemp[0]++;
+					}
+					singlePanelCount.put(dimension, intTemp);
+				}
+			getMultiCount(filePath);
+		}
+		displayCount();
+	}
+	
+	public static void floatingCountButton() {
+		try {
+			UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+		}
+		catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		JFileChooser multiFileChooser = new JFileChooser();
+		multiFileChooser.setMultiSelectionEnabled(true);
+		multiFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		int multiFileOption = multiFileChooser.showOpenDialog(null);
+		if (multiFileOption == JFileChooser.APPROVE_OPTION){
+			File [] multipleFolders = multiFileChooser.getSelectedFiles();
+			//Loop through all folders selected
+			for (int i = 0; i < multipleFolders.length; i++) {
+				
+				//Initialize variables 
+				blackFLCount = 0;
+				goldFLCount = 0;
+				whiteFLCount = 0;
+				extraLargeGoldFLCount = 0;
+				totalFLCount = 0;
+
+				fileTree = listFileTree(multipleFolders[i]);
+
+				//Loop through all sub folders in all selected folders
+				for (File f: fileTree) {
+					filePath = f.toString();
+
+					//Get count for all FL, Gold FL, White FL, and Black FL
+					if (filePath.contains("FL")) {
+						totalFLCount++;
+						if (filePath.contains("WFL")) {
+							whiteFLCount++;
+						} else if (filePath.contains("GFL")) {
+							goldFLCount++;
+						} else {
+							blackFLCount++;
+						}
+					}
+					//Specific count for XL GFL
+					if (filePath.contains("GFL") && (Stream.of("1XLP", "48X36", "36X48", "48x36", "36x48").anyMatch(filePath::contains))) {
+						extraLargeGoldFLCount++;
+					}
+				}
+			}
+			displayFLCount();
+		}
+	}
+	
 	//Choose directory through JFileChooser
 	public static void fileChooser(JFileChooser fileChooser, int option) {
 		try {
@@ -446,6 +412,7 @@ public class GUI extends JFrame implements ActionListener {
 		for (String key: multiPanelCount.keySet()) {
 			int value  = multiPanelCount.get(key);
 			char set = 0;
+			//Used first char of name of multi file name to evaluate the amount of sets for each size
 			for (int i = 0; i < key.length(); i++) {
 				set = key.charAt(0);
 			}
@@ -482,7 +449,7 @@ public class GUI extends JFrame implements ActionListener {
 		//Loop through array of possible multi panel sizes
 		//If the hashMap doesn't contain a size then put that size in hashMap with value of 0
 		for (String size: multiSizes) {
-			if (filePath.contains(size)) {
+			if (StringUtils.containsIgnoreCase(filePath, size)) {
 				if (!multiPanelCount.containsKey(size)) {
 					multiPanelCount.put(size, 0);
 				}
@@ -495,7 +462,10 @@ public class GUI extends JFrame implements ActionListener {
 
 
 	public static void sortFiles(File f, String filePath) {
-
+		
+		//Convert to upperCase for case-insensitivity
+		filePath = filePath.toUpperCase();
+		
 		if (Stream.of("5LP3", "4LP2", "4LP3", "5LSP3", "5MLP1","5MLP2", "5MLP3", "5MLP4", "5MLP5", "5LP  (3)", "4LP  (2)", "4LP  (3)", "5LSP  (3)", "5MLP  (1)","5MLP  (2)", "5MLP  (3)", "5MLP  (4)", "5MLP  (5)").anyMatch(filePath::contains)) {
 			try {
 				FileUtils.moveFileToDirectory(f, largeFolderThree, false);
