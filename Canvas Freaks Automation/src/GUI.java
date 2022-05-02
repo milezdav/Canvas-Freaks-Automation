@@ -40,13 +40,14 @@ public class GUI extends JFrame implements ActionListener {
 	static String [] dimensionsArray = {
 			"8x8", "10x8", "10x10","12x8","12x9","12x12","14x11","14x12","16x8","16x12","16x16","18x12","20x10","20x16","20x20","24x12","24x16", "24x18","24x24",
 			"28x20","28x28","30x15","30x20","30x30","32x16","32x24","32x32","36x24","36x36","40x20","40x26","40x28","40x30","40x40","48x24","48x32","48x36","50x40","50x50","60x20","60x30","60x40"
-	};
-	static String [] multiSizes = {"5XLP", "5MXLP", "5XLSP", "3XLP", "4XLP", "5LP", "5MLP", "5LSP", "3LP", "4LP", "5MP", "5MSP", "3MP", "4MP"};
+			};
+	static String [] multiSizes = {"3MP", "4MP", "5MP", "5MSP", "3LP", "4LP", "5LP","5LSP","5MLP","3XLP", "4XLP","5XLP", "5XLSP", "5MXLP"};
 
 	//Initialize buttons
 	JButton multiButton;
 	JButton countButton;
 	JButton floatingCountButton;
+	JButton mergeButton;
 
 
 	//Initialize fileTree array
@@ -102,14 +103,19 @@ public class GUI extends JFrame implements ActionListener {
 
 		floatingCountButton = new JButton("Get FL Count From Multiple Folders");
 		floatingCountButton.setBounds(200, 100, 100, 50);
+		
+		mergeButton = new JButton("Merge Folders");
+		mergeButton.setBounds(200, 100, 100, 50);
 
 		multiButton.addActionListener(this);
 		countButton.addActionListener(this);
 		floatingCountButton.addActionListener(this);
+		mergeButton.addActionListener(this);
 
 		this.add(countButton);
 		this.add(multiButton);
 		this.add(floatingCountButton);
+		this.add(mergeButton);
 
 
 		this.setSize(500, 300);
@@ -127,11 +133,58 @@ public class GUI extends JFrame implements ActionListener {
 			countButton();
 
 		} else if (e.getSource() == multiButton) {
-			multiButton();
-				
+			multiButton();		
+		}else {
+			mergeButton();
 		}
 	}
 	
+	public static void mergeButton() {
+		//Concept --> find folders with swapped dimensions and move those files to reversed dimension (which is in the dimensions array), then lastly, delete the swapped dimension folder
+		//for example 36x48 is a swapped dimension and all the files in this folder will be moved to the 48x36 folder and the 36x48 folder will be deleted
+
+		fileChooser(fileChooser, option);
+		fileTree = listFileTree(chosenFolder);
+		for (File f: fileTree) {
+		filePath = f.toString();
+		filePath = filePath.toLowerCase();
+		String [] parts = filePath.split("\\\\");
+
+
+		//Loop through dimensionsArray and find swapped dimensions
+		for (String size: dimensionsArray) {
+			String [] dimensionParts = size.split("x");
+			String swappedDimension = dimensionParts[1] + "x" + dimensionParts[0];
+	
+			if (filePath.contains(swappedDimension)) {
+	
+				String dimensionInArray = dimensionParts[0] + "x" + dimensionParts[1];
+		
+				filePath = filePath.replace(swappedDimension, dimensionInArray);
+		
+				//Find path of dimensionInArray to create java file
+				String dimensionInArrayPath = filePath.substring(0, filePath.indexOf(dimensionInArray) + dimensionInArray.length() + 1);
+		
+				File dimensionInArrayFolder = new File(dimensionInArrayPath);
+		
+				//Move swapped dimension files to dimensionInArrayFolder
+				try {
+					FileUtils.moveFileToDirectory(f, dimensionInArrayFolder, false);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+
+
+				//Delete empty folder
+				String parentFolder = filePath.substring(0, filePath.indexOf(parts[parts.length - 3]) + parts[parts.length - 3].length() + 1);
+				excCommand("cd " + parentFolder + "\n" + "rmdir " + swappedDimension);
+	
+				}
+			}
+
+		}
+
+	}
 	public static void multiButton() {
 		fileChooser(fileChooser, option);
 		fileTree = listFileTree(chosenFolder);
@@ -210,28 +263,29 @@ public class GUI extends JFrame implements ActionListener {
 						dimension = dimension.replace(swappedDimension, dimensionInArray);
 					}
 				}
-			}
-
 			//Put sizes in hashMap with int array of thickness
-			if (dimension != null) {
-					if (!singlePanelCount.containsKey(dimension)) {
-						singlePanelCount.put(dimension, new int[] {0,0,0});
-					}
-					//Logic to change the count for each individual thickness for each key in the hashMap
-					int[] intTemp = singlePanelCount.get(dimension);
-					if (fileName.contains("FL")) {
-						intTemp[2]++;
-					} else if (fileName.contains("1.5")) {
-						intTemp[1]++;
-					} else {
-						intTemp[0]++;
-					}
-					singlePanelCount.put(dimension, intTemp);
+				if (!singlePanelCount.containsKey(dimension)) {
+					singlePanelCount.put(dimension, new int[] {0,0,0});
 				}
+				//Logic to change the count for each individual thickness for each key in the hashMap
+				int[] intTemp = singlePanelCount.get(dimension);
+				if (fileName.contains("FL")) {
+					intTemp[2]++;
+				} else if (fileName.contains("1.5")) {
+					intTemp[1]++;
+				} else {	
+					intTemp[0]++;
+				}
+				singlePanelCount.put(dimension, intTemp);
+			}
 			getMultiCount(filePath);
 		}
+	
 		displayCount();
+		singlePanelCount.clear();
+		multiPanelCount.clear();
 	}
+	
 	
 	public static void floatingCountButton() {
 		try {
@@ -408,17 +462,23 @@ public class GUI extends JFrame implements ActionListener {
 			tableSingleModel.addRow(new Object[] { key, firstSizeCount, secondSizeCount, thirdSizeCount});
 		}
 
-		//Loop through multiPanelCount and add row with each dimension and amount
-		for (String key: multiPanelCount.keySet()) {
-			int value  = multiPanelCount.get(key);
-			char set = 0;
-			//Used first char of name of multi file name to evaluate the amount of sets for each size
-			for (int i = 0; i < key.length(); i++) {
-				set = key.charAt(0);
+		//Loop through multiSizes array and check through hashmap keySet so that sizes display in correct order
+		for (String size: multiSizes) {
+			//Loop through multiPanelCount and add row with each dimension and amount
+			for (String key: multiPanelCount.keySet()) {
+				if (size.equalsIgnoreCase(key)) {
+					int value  = multiPanelCount.get(key);
+					char set = 0;
+					//Used first char of name of multi file name to evaluate the amount of sets for each size
+					for (int i = 0; i < key.length(); i++) {
+						set = key.charAt(0);
+					}
+					int sets = value / Character.getNumericValue(set);
+					totalMultiCount+=value;
+					tableMultiModel.addRow(new Object[] { key, sets, value });
+				}
 			}
-			int sets = value / Character.getNumericValue(set);
-			totalMultiCount+=value;
-			tableMultiModel.addRow(new Object[] { key, sets, value });
+		
 		}
 
 		totalCount = totalSingleCount + totalMultiCount;
@@ -442,7 +502,7 @@ public class GUI extends JFrame implements ActionListener {
 		frame.setSize(800, 300);
 		frame.pack();
 		frame.setVisible(true);
-
+		
 	}
 
 	public static void getMultiCount(String filePath) {
