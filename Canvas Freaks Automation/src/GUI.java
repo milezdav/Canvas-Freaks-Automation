@@ -131,10 +131,11 @@ public class GUI extends JFrame implements ActionListener {
 	
 		} else if (e.getSource() == countButton) {
 			countButton();
-
+			
 		} else if (e.getSource() == multiButton) {
-			multiButton();		
-		}else {
+			multiButton();	
+			
+		} else {
 			mergeButton();
 		}
 	}
@@ -282,10 +283,13 @@ public class GUI extends JFrame implements ActionListener {
 		}
 	
 		displayCount();
+		
+		//Reset count
+		fileTree = null;
 		singlePanelCount.clear();
 		multiPanelCount.clear();
 	}
-	
+
 	
 	public static void floatingCountButton() {
 		try {
@@ -383,7 +387,8 @@ public class GUI extends JFrame implements ActionListener {
 		frame.setVisible(true);
 
 	}
-
+	
+	
 	//Displays count for multi-panels and single-panels
 	public static void displayCount() {
 
@@ -620,9 +625,7 @@ public class GUI extends JFrame implements ActionListener {
 			p = Runtime.getRuntime().exec(command);
 			new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
 			new Thread(new SyncPipe(p.getInputStream(), System.out)).start();
-			PrintWriter stdin = new PrintWriter(p.getOutputStream());
-			stdin.println(cmd);
-			stdin.close();
+			PrintWriter stdin = new PrintWriter(p.getOutputStream()); 
 			p.waitFor();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -642,7 +645,7 @@ public class GUI extends JFrame implements ActionListener {
 			excCommand("cd " + extraLargePath + "\n" + "mkdir \"1 and 5\"");
 			excCommand("exit");
 		}
-		if (filePath.contains("Large") && !filePath.contains("Extra Large") && largeFolderThree == null && largeFolderTwoAndFour == null && largeFolderOneAndFive == null) {
+		if (filePath.contains("Large") && !filePath.contains("Extra Large") && largeFolderThree == null && largeFolderTwoAndFour == null && largeFolderOneAndFive == null) {	
 			largeFolderThree = new File(largePath + "\\3");
 			largeFolderTwoAndFour = new File(largePath + "\\2 and 4");
 			largeFolderOneAndFive = new File(largePath + "\\1 and 5");
