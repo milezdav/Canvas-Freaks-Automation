@@ -1,5 +1,5 @@
 # Canvas-Freaks-Automation
-This tool is used to automate processes used for commerical printing at the company Canvas Freaks. The ultimate purpose of this tool is to increase productivity at Canvas Freaks by reducing the amount of time it takes to complete consistently repeated tasks that involve the Windows File System.
+This tool is used to automate processes used for commercial printing at the company Canvas Freaks. The ultimate purpose of this tool is to increase productivity at Canvas Freaks by reducing the amount of time it takes to complete consistently repeated tasks that involve the Windows File System.
 All of the implementations automate processes that involve the Windows File System.
 These implementations include:
 a button to automatically create sub-folders, sort files, and move files to specific sub-folders for the multi panels --
